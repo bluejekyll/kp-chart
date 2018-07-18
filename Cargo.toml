@@ -3,4 +3,12 @@ name = "kp-chart"
 version = "0.1.0"
 authors = ["Benjamin Fry <benjaminfry@me.com>"]
 
+[lib]
+name = "kp_chart"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kp-chart"
+path = "src/main.rs"
+
 [dependencies]

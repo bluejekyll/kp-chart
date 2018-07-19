@@ -3,16 +3,12 @@ body {
     margin: 0;
     padding: 0;
     text-align: center;
-    font-family: Georgia, serif;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 h1 {
     font-family: Georgia, serif;
-}
-
-th {
-    border: 1px;
-    font-size: 12pt;
+    font-style: italic;
 }
 
 tr {
@@ -21,10 +17,18 @@ tr {
 
 td {
     font-family: "Comic Sans MS", cursive, sans-serif;
+    font-style: bold;
+    font-size: 16pt;
     border-bottom-color: #a0a0a0;
     border-bottom-width: 1px;
     border-bottom-style: solid;
     border-left-color: #a0a0a0;
     border-left-width: 1px;
     border-left-style: solid;
+}
+
+th {
+    border: 1px;
+    font-size: 12pt;
+    font-style: normal;
 }

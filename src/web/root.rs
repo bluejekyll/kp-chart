@@ -28,6 +28,7 @@ impl Renderable<Context, RootModel> for RootModel {
             <>
                 <h1>{"Kitchen Patrol Charts"}</h1>
                 <Chart: />
+                <People: />
             </>
         }
     }

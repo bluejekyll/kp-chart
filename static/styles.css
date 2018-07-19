@@ -11,24 +11,37 @@ h1 {
     font-style: italic;
 }
 
+table {
+    margin: 5px;
+    background-color: cornsilk;
+    box-shadow: 5px 5px 5px #aaaaaa;
+    text-align: left;
+}
+
 tr {
     height: 10px;
 }
 
 td {
     font-family: "Comic Sans MS", cursive, sans-serif;
-    font-style: bold;
+    font-variant: small-caps;
+    font-weight: bold;
     font-size: 16pt;
+    color: crimson;
     border-bottom-color: #a0a0a0;
     border-bottom-width: 1px;
     border-bottom-style: solid;
-    border-left-color: #a0a0a0;
+    /* border-left-color: #a0a0a0;
     border-left-width: 1px;
-    border-left-style: solid;
+    border-left-style: solid; */
 }
 
 th {
+    padding: 5px;
     border: 1px;
     font-size: 12pt;
     font-style: normal;
+    border-bottom-color: #000000;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
 }

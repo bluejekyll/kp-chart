@@ -6,7 +6,9 @@ pub struct Context {
 }
 
 mod chart;
+mod people;
 mod root;
 
 pub use self::chart::Chart;
+pub use self::people::People;
 pub use self::root::RootModel;

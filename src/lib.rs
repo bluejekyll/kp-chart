@@ -1,32 +1,10 @@
+pub mod data;
+
 use std::fmt::{self, Display, Formatter};
 use std::iter::*;
 use std::slice::Iter;
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct Job {
-    name: &'static str,
-    people: Vec<Ability>,
-}
-
-impl Job {
-    pub fn new(name: &'static str, people: Vec<Ability>) -> Self {
-        Self { name, people }
-    }
-
-    pub fn name(&self) -> &str {
-        self.name
-    }
-
-    pub fn people(&self) -> &[Ability] {
-        &self.people
-    }
-}
-
-impl Display for Job {
-    fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(fmt, "{}", self.name)
-    }
-}
+use data::*;
 
 pub fn default_jobs() -> Vec<Job> {
     let mut jobs = Vec::<Job>::new();
@@ -61,9 +39,7 @@ pub fn default_jobs() -> Vec<Job> {
     jobs
 }
 
-pub fn calculate_day_jobs() -> Week {
-    let jobs = default_jobs();
-
+pub fn default_people() -> Vec<Person> {
     let mut people = Vec::<Person>::new();
     // people.push(Person{name: "Nana", ability: Ability::Adult});
     people.push(Person::new("Papa", Ability::Adult));
@@ -80,8 +56,15 @@ pub fn calculate_day_jobs() -> Week {
     people.push(Person::new("Little Jake", Ability::Teen));
     people.push(Person::new("Catherine", Ability::Child));
     people.push(Person::new("Owen", Ability::Child));
-    // people.push(Person{name: "Adelise", ability: Ability::Child});
-    let people = people;
+
+    return people;
+}
+
+pub fn calculate_day_jobs() -> Week {
+    let jobs = default_jobs();
+
+    let people = default_people();
+
     let children = people
         .clone()
         .into_iter()
@@ -133,127 +116,4 @@ pub fn calculate_day_jobs() -> Week {
     }
 
     Week::new(days)
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Person {
-    name: &'static str,
-    ability: Ability,
-}
-
-impl Person {
-    pub fn new(name: &'static str, ability: Ability) -> Self {
-        Self { name, ability }
-    }
-
-    pub fn name(&self) -> &str {
-        self.name
-    }
-
-    pub fn ability(&self) -> Ability {
-        self.ability
-    }
-}
-
-impl Display for Person {
-    fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(fmt, "{}", self.name)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Ord, PartialOrd)]
-pub enum Ability {
-    Adult,
-    Teen,
-    Child,
-}
-
-#[derive(Clone, Debug)]
-pub struct Day {
-    name: String,
-    jobs: Vec<(Job, Vec<Person>)>,
-}
-
-impl Day {
-    pub fn new(
-        name: String,
-        jobs: Vec<Job>,
-        children: &mut Cycle<Iter<Person>>,
-        teens: &mut Cycle<Iter<Person>>,
-        adults: &mut Cycle<Iter<Person>>,
-    ) -> Self {
-        let mut day_jobs = jobs
-            .clone()
-            .into_iter()
-            .map(|j| (j, Vec::<Person>::new()))
-            .collect::<Vec<_>>();
-
-        // pass through all children jobs first
-        for (job, ref mut workers) in day_jobs.iter_mut() {
-            for ability in job.people.iter() {
-                match *ability {
-                    Ability::Child => {
-                        workers.push(children.next().expect("ran out of children").clone())
-                    }
-                    Ability::Teen => workers.push(teens.next().expect("ran out of teens").clone()),
-                    Ability::Adult => {
-                        workers.push(adults.next().expect("ran out of adults").clone())
-                    }
-                }
-            }
-        }
-
-        Self {
-            name,
-            jobs: day_jobs,
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn jobs(&self) -> &[(Job, Vec<Person>)] {
-        &self.jobs
-    }
-
-    pub fn get_job_people(&self, job: usize) -> &[Person] {
-        &self.jobs[job].1
-    }
-}
-
-impl Display for Day {
-    fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
-        for (job, people) in self.jobs.iter() {
-            write!(fmt, "{}: ", job)?;
-            for person in people.iter() {
-                write!(fmt, "{}, ", person)?;
-            }
-            writeln!(fmt, "")?;
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Week {
-    week: Vec<Day>,
-}
-
-impl Week {
-    pub fn new(week: Vec<Day>) -> Self {
-        Self { week }
-    }
-
-    pub fn num_jobs(&self) -> usize {
-        self.week[0].jobs.len()
-    }
-
-    pub fn days(&self) -> &[Day] {
-        &self.week
-    }
-
-    pub fn jobs(&self) -> impl Iterator<Item = &Job> {
-        self.week[0].jobs.iter().map(|(job, _)| job)
-    }
 }

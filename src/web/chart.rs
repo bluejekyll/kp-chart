@@ -1,6 +1,7 @@
 use yew::prelude::*;
 
-use kp_chart::*;
+use kp_chart;
+use kp_chart::data::*;
 use web::*;
 
 #[derive(Clone)]
@@ -8,31 +9,12 @@ pub struct Chart {
     week: Week,
 }
 
-// #[derive(Clone, Default, Eq, PartialEq)]
-// pub struct Props {
-//     opt: bool,
-// }
-
-// impl Chart {
-//     pub fn new(days: Vec<Day>) -> Self {
-//         Self { days }
-//     }
-
-//     pub fn view(&self) -> Html<Context, RootModel> {
-//         html! {
-//             <table>
-//             <tr>{ for self.days.iter().map(|d| header(d.name())) }</tr>
-//             </table>
-//         }
-//     }
-// }
-
 impl Component<Context> for Chart {
     type Message = ();
     type Properties = ();
 
     fn create(props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
-        let week = calculate_day_jobs();
+        let week = kp_chart::calculate_day_jobs();
 
         context.console.debug("creating Chart");
         Self { week }
@@ -70,18 +52,13 @@ impl Renderable<Context, Chart> for Chart {
         };
 
         html! {
-            <table>
-                <tr><th>{"Job"}</th> { for self.week.days().iter().map(|d| header(d.name())) }</tr>
-                { for self.week.jobs().enumerate().map(|j| job_row(j)) }
-            </table>
+            <>
+                <h2>{"Job Chart"}</h2>
+                <table>
+                    <tr><th>{"Job"}</th> { for self.week.days().iter().map(|d| header(d.name())) }</tr>
+                    { for self.week.jobs().enumerate().map(|j| job_row(j)) }
+                </table>
+            </>
         }
     }
 }
-
-// fn day_header(name: &str) -> Html<Context, Chart> {
-//     html! {
-//         <th>{ format!("{}", name) }</th>
-//     }
-// }
-
-// fn job_header(name: &str)

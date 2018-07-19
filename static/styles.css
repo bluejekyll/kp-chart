@@ -1,0 +1,30 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: Georgia, serif;
+}
+
+h1 {
+    font-family: Georgia, serif;
+}
+
+th {
+    border: 1px;
+    font-size: 12pt;
+}
+
+tr {
+    height: 10px;
+}
+
+td {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    border-bottom-color: #a0a0a0;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-left-color: #a0a0a0;
+    border-left-width: 1px;
+    border-left-style: solid;
+}

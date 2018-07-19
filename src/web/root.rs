@@ -25,8 +25,10 @@ impl Renderable<Context, RootModel> for RootModel {
         use web::Chart;
 
         html! {
-            <h1>{"Welcome to Kitchen Patrol Charts"}</h1>
-            <Chart: />
+            <>
+                <h1>{"Welcome to Kitchen Patrol Charts"}</h1>
+                <Chart: />
+            </>
         }
     }
 }

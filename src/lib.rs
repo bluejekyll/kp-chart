@@ -1,3 +1,8 @@
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
+
 pub mod data;
 
 use std::fmt::{self, Display, Formatter};
@@ -62,9 +67,11 @@ pub fn default_people() -> Vec<Person> {
 
 pub fn calculate_day_jobs() -> Week {
     let jobs = default_jobs();
-
     let people = default_people();
+    calculate(5, jobs, people)
+}
 
+pub fn calculate(num_days: usize, jobs: Vec<Job>, people: Vec<Person>) -> Week {
     let children = people
         .clone()
         .into_iter()
@@ -91,8 +98,8 @@ pub fn calculate_day_jobs() -> Week {
         j.people().iter().filter(|a| **a == Ability::Adult).count() + count
     });
 
-    let mut days = Vec::with_capacity(5);
-    for i in 0..5 {
+    let mut days = Vec::with_capacity(num_days);
+    for i in 0..num_days {
         let day = Day::new(
             format!("day_{}", i),
             jobs.clone(),

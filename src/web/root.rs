@@ -1,6 +1,5 @@
 use yew::prelude::*;
 
-use kp_chart::*;
 use web::*;
 
 pub struct RootModel {}
@@ -28,7 +27,7 @@ impl Renderable<Context, RootModel> for RootModel {
             <>
                 <h1>{"Kitchen Patrol Charts"}</h1>
                 <Chart: />
-                <People: />
+                <PeopleModel: />
             </>
         }
     }

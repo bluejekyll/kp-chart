@@ -1,7 +1,10 @@
+use std::ops::DerefMut;
+
 use yew::prelude::*;
 
 use kp_chart;
 use kp_chart::data::*;
+use web::people::PeopleStore;
 use web::*;
 
 #[derive(Clone)]
@@ -13,21 +16,24 @@ impl Component<Context> for Chart {
     type Message = ();
     type Properties = ();
 
-    fn create(props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
-        let week = kp_chart::calculate_day_jobs();
+    fn create(_props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
+        let jobs = kp_chart::default_jobs();
+        let people = PeopleStore::restore(context.deref_mut())
+            .map(|p| p.people)
+            .unwrap_or_else(kp_chart::default_people);
+        let week = kp_chart::calculate(5, jobs, people);
 
         context.console.debug("creating Chart");
         Self { week }
     }
 
-    fn update(&mut self, msg: Self::Message, context: &mut Env<Context, Self>) -> ShouldRender {
+    fn update(&mut self, _msg: Self::Message, _context: &mut Env<Context, Self>) -> ShouldRender {
         true
     }
 }
 
 impl Renderable<Context, Chart> for Chart {
     fn view(&self) -> Html<Context, Self> {
-        let jobs = self.week.jobs();
         let header = |name: &str| {
             html!{
                 <th>{ format!("{}", name) }</th>
@@ -55,8 +61,12 @@ impl Renderable<Context, Chart> for Chart {
             <>
                 <h2>{"Job Chart"}</h2>
                 <table>
-                    <tr><th>{"Job"}</th> { for self.week.days().iter().map(|d| header(d.name())) }</tr>
-                    { for self.week.jobs().enumerate().map(|j| job_row(j)) }
+                    <thead>
+                        <tr><th>{"Job"}</th> { for self.week.days().iter().map(|d| header(d.name())) }</tr>
+                    </thead>
+                    <tbody>
+                        { for self.week.jobs().enumerate().map(|j| job_row(j)) }
+                    </tbody>
                 </table>
             </>
         }

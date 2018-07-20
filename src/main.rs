@@ -1,11 +1,13 @@
 extern crate kp_chart;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
 #[cfg(feature = "web-spa")]
 #[macro_use]
 extern crate yew;
-
-use std::iter::*;
-
-use kp_chart::*;
+#[cfg(feature = "web-spa")]
+extern crate stdweb;
 
 #[cfg(not(feature = "web-spa"))]
 fn main() {
@@ -22,12 +24,14 @@ fn main() {
     use web::*;
     use yew::prelude::*;
     use yew::services::console::ConsoleService;
+    use yew::services::storage::{Area, StorageService};
 
     let context = Context {
         console: ConsoleService::new(),
+        local_store: StorageService::new(Area::Local),
     };
 
-    let days = yew::initialize();
+    yew::initialize();
 
     let app: App<_, RootModel> = App::new(context);
     app.mount_to_body();

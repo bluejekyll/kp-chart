@@ -12,36 +12,70 @@ h1 {
 }
 
 table {
-    margin: 5px;
+    margin: 20px;
     background-color: cornsilk;
     box-shadow: 5px 5px 5px #aaaaaa;
     text-align: left;
+    border-collapse: collapse;
+    border: 1px solid #dddddd;
 }
 
-tr {
-    height: 10px;
+table th, table td {
+    padding: 5px;
 }
 
-td {
+thead {
+    padding: 10px;
+    border: 1px;
+    font-size: 12pt;
+    font-style: normal;
+    border-top-color: #c50d0d;
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-bottom-color: #290dc5;
+    border-bottom-width: 5px;
+    border-bottom-style: double;
+}
+
+tbody td {
     font-family: "Comic Sans MS", cursive, sans-serif;
     font-variant: small-caps;
     font-weight: bold;
     font-size: 16pt;
     color: crimson;
-    border-bottom-color: #a0a0a0;
-    border-bottom-width: 1px;
-    border-bottom-style: solid;
-    /* border-left-color: #a0a0a0;
-    border-left-width: 1px;
-    border-left-style: solid; */
 }
 
-th {
-    padding: 5px;
+tbody th {
     border: 1px;
     font-size: 12pt;
     font-style: normal;
+
+}
+
+tbody th, tbody td {
     border-bottom-color: #000000;
     border-bottom-width: 1px;
     border-bottom-style: solid;
+    border-right-color: #cacaca;
+    border-right-width: 1px;
+    border-right-style: solid;}
+
+tfoot td {
+    border: none;
+}
+
+.edit_delete {
+    color: black;
+} 
+
+.disabled {
+    color: lightgray;
+}
+
+i {
+    cursor: pointer;
+}
+
+i:active {
+    color: lightgray;
 }

@@ -117,8 +117,6 @@ pub fn calculate(num_days: usize, jobs: Vec<Job>, people: Vec<Person>) -> Week {
             adults_iter.next();
         }
 
-        println!("");
-        println!("day {}:\n{}", i, day);
         days.push(day);
     }
 

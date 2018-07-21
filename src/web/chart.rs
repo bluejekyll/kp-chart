@@ -1,5 +1,3 @@
-use std::ops::DerefMut;
-
 use yew::prelude::*;
 
 use kp_chart;
@@ -9,26 +7,57 @@ use web::*;
 
 #[derive(Clone)]
 pub struct Chart {
+    people_version: usize,
     week: Week,
+}
+
+#[derive(Clone, Default, PartialEq)]
+pub struct ChartProps {
+    pub people_version: usize,
+}
+
+impl Chart {
+    fn calculate(context: &mut Context) -> Self {
+        context.console.debug("calculating new week");
+        let jobs = kp_chart::default_jobs();
+        context.console.debug("====> jobs...");
+        let (people_version, people) = PeopleStore::restore(&mut *context)
+            .map(|p| (p.inc, p.people))
+            .unwrap_or_else(|| (0, kp_chart::default_people()));
+        context.console.debug("====> week...");
+        Self {
+            people_version: people_version,
+            week: kp_chart::calculate(5, jobs, people),
+        }
+    }
 }
 
 impl Component<Context> for Chart {
     type Message = ();
-    type Properties = ();
+    type Properties = ChartProps;
 
     fn create(_props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
-        let jobs = kp_chart::default_jobs();
-        let people = PeopleStore::restore(context.deref_mut())
-            .map(|p| p.people)
-            .unwrap_or_else(kp_chart::default_people);
-        let week = kp_chart::calculate(5, jobs, people);
-
         context.console.debug("creating Chart");
-        Self { week }
+
+        Self::calculate(&mut *context)
     }
 
     fn update(&mut self, _msg: Self::Message, _context: &mut Env<Context, Self>) -> ShouldRender {
         true
+    }
+
+    fn change(
+        &mut self,
+        props: Self::Properties,
+        context: &mut Env<Context, Self>,
+    ) -> ShouldRender {
+        if self.people_version != props.people_version {
+            context.console.debug("updating Chart");
+            *self = Self::calculate(&mut *context);
+            true
+        } else {
+            false
+        }
     }
 }
 

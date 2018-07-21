@@ -1,5 +1,3 @@
-use std::ops::DerefMut;
-
 use stdweb::web::html_element::SelectElement;
 use yew::callback::Callback;
 use yew::format::Json;
@@ -26,6 +24,12 @@ pub enum PeopleMsg {
 pub struct PeopleModel {
     inc: usize,
     people: Vec<(Person, IsEditting)>,
+    on_save: Option<Callback<usize>>,
+}
+
+#[derive(Clone, Default, PartialEq)]
+pub struct PeopleProps {
+    pub on_save: Option<Callback<usize>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -67,24 +71,25 @@ impl From<PeopleModel> for PeopleStore {
     }
 }
 
-impl From<PeopleStore> for PeopleModel {
-    fn from(model: PeopleStore) -> Self {
+impl PeopleModel {
+    fn from(model: PeopleStore, on_save: Option<Callback<usize>>) -> Self {
         Self {
             inc: model.inc,
             people: model.people.into_iter().map(|p| (p, false)).collect(),
+            on_save,
         }
     }
 }
 
 impl Component<Context> for PeopleModel {
     type Message = PeopleMsg;
-    type Properties = ();
+    type Properties = PeopleProps;
 
-    fn create(_props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
+    fn create(props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
         context.console.debug("creating PeopleModel");
 
-        match PeopleStore::restore(context.deref_mut()) {
-            Some(this) => this.into(),
+        match PeopleStore::restore(&mut *context) {
+            Some(this) => PeopleModel::from(this, props.on_save),
             None => {
                 let people = kp_chart::default_people();
                 // TODO: make a borrowed type
@@ -93,8 +98,8 @@ impl Component<Context> for PeopleModel {
                     people: people,
                 };
 
-                people.store(context.deref_mut());
-                people.into()
+                people.store(&mut *context);
+                PeopleModel::from(people, props.on_save)
             }
         }
     }
@@ -104,11 +109,10 @@ impl Component<Context> for PeopleModel {
             PeopleMsg::SavePeople => {
                 context.console.debug("saving PeopleModel");
                 let mut people: PeopleStore = self.clone().into();
-                people.store(context.deref_mut());
+                people.store(&mut *context);
+                *self = PeopleModel::from(people, self.on_save.take());
 
-                for (_, editting) in self.people.iter_mut() {
-                    *editting = false;
-                }
+                self.on_save.as_ref().map(|e| e.emit(self.inc));
                 true
             }
             PeopleMsg::AddPerson => {
@@ -163,6 +167,14 @@ impl Component<Context> for PeopleModel {
                 })
                 .unwrap_or(false),
         }
+    }
+
+    fn change(
+        &mut self,
+        _props: Self::Properties,
+        _context: &mut Env<Context, Self>,
+    ) -> ShouldRender {
+        false
     }
 }
 

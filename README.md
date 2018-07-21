@@ -2,6 +2,10 @@
 
 An example application, written in Rust, by someone with little frontend experience
 
+## Usage
+
+Browse to [https://bluejekyll.github.io/kp-chart/](https://bluejekyll.github.io/kp-chart/)
+
 ## Building
 
 - Install Rust
@@ -32,6 +36,7 @@ And connect to the local server: [http://[::1]:8000/](http://[::1]:8000/)
 ## Deploying
 
 ```console
-$> cargo web deploy
-$> rm -r docs/* && cp target/deploy/* docs/
+$> cargo web deploy --release && rm -r docs/* && cp target/deploy/* docs/
+$> git commit -m $new_release
+$> git push
 ```

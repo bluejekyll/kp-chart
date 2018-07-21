@@ -46,21 +46,16 @@ pub fn default_jobs() -> Vec<Job> {
 
 pub fn default_people() -> Vec<Person> {
     let mut people = Vec::<Person>::new();
-    // people.push(Person{name: "Nana", ability: Ability::Adult});
-    people.push(Person::new("Papa", Ability::Adult));
-    people.push(Person::new("Chris", Ability::Adult));
-    people.push(Person::new("Kim", Ability::Adult));
-    people.push(Person::new("Becky", Ability::Adult));
-    people.push(Person::new("Carl", Ability::Adult));
-    people.push(Person::new("Ben", Ability::Adult));
-    // people.push(Person{name: "Lyndsey", ability: Ability::Adult});
-    people.push(Person::new("Big Jake", Ability::Adult));
-    // people.push(Person{name: "Saeng", ability: Ability::Adult});
-    people.push(Person::new("Anna", Ability::Teen));
-    people.push(Person::new("Luke", Ability::Teen));
-    people.push(Person::new("Little Jake", Ability::Teen));
-    people.push(Person::new("Catherine", Ability::Child));
-    people.push(Person::new("Owen", Ability::Child));
+    people.push(Person::new("Grandma", Ability::Adult));
+    people.push(Person::new("Grandpa", Ability::Adult));
+    people.push(Person::new("Mom", Ability::Adult));
+    people.push(Person::new("Dad", Ability::Adult));
+    people.push(Person::new("Aunt Jane", Ability::Adult));
+    people.push(Person::new("Uncle Joe", Ability::Adult));
+    people.push(Person::new("Jackie", Ability::Teen));
+    people.push(Person::new("Jake", Ability::Teen));
+    people.push(Person::new("Jill", Ability::Child));
+    people.push(Person::new("Jeffrey", Ability::Child));
 
     return people;
 }

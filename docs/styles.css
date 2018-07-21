@@ -38,7 +38,7 @@ thead {
 }
 
 tbody td {
-    font-family: "Chalkboard", "Comic Sans MS", sans-serif;
+    font-family: "Chalkboard", "ChalkboardSE-Regular", "Comic Sans", "Comic Sans MS", sans-serif;
     font-variant: small-caps;
     font-weight: bold;
     font-size: 16pt;

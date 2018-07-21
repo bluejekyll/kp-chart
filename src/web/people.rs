@@ -1,7 +1,6 @@
 use std::ops::DerefMut;
 
 use stdweb::web::html_element::SelectElement;
-use stdweb::web::IElement;
 use yew::callback::Callback;
 use yew::format::Json;
 use yew::prelude::*;
@@ -15,8 +14,10 @@ type IsEditting = bool;
 type Id = usize;
 
 pub enum PeopleMsg {
-    ClickedSavePeople,
+    AddPerson,
+    SavePeople,
     EditPerson(Id),
+    DeletePerson(Id),
     PersonNameInput(Id, String),
     PersonAbilityInput(Id, Ability),
 }
@@ -100,7 +101,7 @@ impl Component<Context> for PeopleModel {
 
     fn update(&mut self, msg: Self::Message, context: &mut Env<Context, Self>) -> ShouldRender {
         match msg {
-            PeopleMsg::ClickedSavePeople => {
+            PeopleMsg::SavePeople => {
                 context.console.debug("saving PeopleModel");
                 let mut people: PeopleStore = self.clone().into();
                 people.store(context.deref_mut());
@@ -108,6 +109,12 @@ impl Component<Context> for PeopleModel {
                 for (_, editting) in self.people.iter_mut() {
                     *editting = false;
                 }
+                true
+            }
+            PeopleMsg::AddPerson => {
+                context.console.debug("adding a Person");
+                let person = Person::new("Jane Doe", Ability::Adult);
+                self.people.push((person, true));
                 true
             }
             PeopleMsg::EditPerson(id) => {
@@ -123,6 +130,11 @@ impl Component<Context> for PeopleModel {
                         }
                     })
                     .unwrap_or(false)
+            }
+            PeopleMsg::DeletePerson(idx) => {
+                let person = self.people.remove(idx);
+                context.console.debug(&format!("deleted {:?}", person));
+                true
             }
             PeopleMsg::PersonNameInput(id, name) => self
                 .people
@@ -164,7 +176,7 @@ impl Renderable<Context, PeopleModel> for PeopleModel {
 
         let edit_delete = |id: Id, is_editting: IsEditting| {
             html!{
-                <EditDelete: id={id}, is_editting={is_editting}, on_edit=|id: Id| PeopleMsg::EditPerson(id), />
+                <EditDelete: id={id}, is_editting={is_editting}, on_edit=|id: Id| PeopleMsg::EditPerson(id), on_delete=|id: Id| PeopleMsg::DeletePerson(id), />
             }
         };
         let person_row = |id: Id, person: &(Person, IsEditting)| {
@@ -189,7 +201,13 @@ impl Renderable<Context, PeopleModel> for PeopleModel {
                     </tbody>
                     <tfoot>
                         <tr><td>
-                            <button onclick=|_| PeopleMsg::ClickedSavePeople, >{"Save all the People"}</button>
+                            <button onclick=|_| PeopleMsg::AddPerson, >
+                                <i class=("fa", "fa-plus-square"), aria-hidden="true",></i>
+                            </button>
+                            <button onclick=|_| PeopleMsg::SavePeople, >
+                                <i class=("fa", "fa-floppy-o"), aria-hidden="true",></i>
+                            </button>
+                            //button onclick=|_| PeopleMsg::SavePeople, >{"Save all the People"}</button>
                         </td></tr>
                     </tfoot>
                 </table>
@@ -240,6 +258,7 @@ struct EditDelete {
     pub id: Id,
     pub is_editting: IsEditting,
     pub on_edit: Option<Callback<Id>>,
+    pub on_delete: Option<Callback<Id>>,
 }
 
 enum EditDeleteMsg {
@@ -256,18 +275,22 @@ impl Component<Context> for EditDelete {
             id: props.id,
             is_editting: props.is_editting,
             on_edit: props.on_edit,
+            on_delete: props.on_delete,
         }
     }
 
     fn update(&mut self, msg: Self::Message, context: &mut Env<Context, Self>) -> ShouldRender {
         match msg {
             EditDeleteMsg::Edit => {
-                context.console.debug(&format!("edited: {}", self.id));
+                context.console.debug(&format!("editting: {}", self.id));
                 if !self.is_editting {
                     self.on_edit.as_ref().map(|c| c.emit(self.id));
                 }
             }
-            EditDeleteMsg::Delete => unimplemented!("delete needed"),
+            EditDeleteMsg::Delete => {
+                context.console.debug(&format!("deleting: {}", self.id));
+                self.on_delete.as_ref().map(|c| c.emit(self.id));
+            }
         }
 
         false
@@ -292,8 +315,8 @@ impl Renderable<Context, EditDelete> for EditDelete {
 
         html! {
             <div class="edit_delete", >
-                <i class=("fa", "fa-pencil-square-o", "fa-fw", disabled), onclick=|_| EditDeleteMsg::Edit, />
-                <i class=("fa", "fa-trash", "fa-fw"), />
+                <i class=("fa", "fa-pencil-square-o", "fa-fw", disabled), aria-hidden="true", onclick=|_| EditDeleteMsg::Edit, />
+                <i class=("fa", "fa-trash", "fa-fw"), aria-hidden="true", onclick=|_| EditDeleteMsg::Delete, />
             </div>
         }
     }

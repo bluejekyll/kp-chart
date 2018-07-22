@@ -22,13 +22,13 @@ $> rustup toolchain install wasm32-unknown-unknown
 - Install `cargo-web`
 
 ```console
-&> cargo install cargo-web
+$> cargo install cargo-web
 ```
 
 - Start a local appserver
 
 ```console
-&> cargo web start
+$> cargo web start
 ```
 
 And connect to the local server: [http://[::1]:8000/](http://[::1]:8000/)

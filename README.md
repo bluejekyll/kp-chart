@@ -16,7 +16,7 @@ Browse to [https://bluejekyll.github.io/kp-chart/](https://bluejekyll.github.io/
 
 ```console
 $> rustup default nightly
-$> rustup toolchain install wasm32-unknown-unknown
+$> rustup target install wasm32-unknown-unknown
 ```
 
 - Install `cargo-web`

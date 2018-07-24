@@ -477,9 +477,15 @@ impl Renderable<Context, PersonAbility> for PersonAbility {
     fn view(&self) -> Html<Context, Self> {
         if self.is_editting {
             let select_ability = |ability: Ability| {
-                // TODO: figure out selected
-                html! {
-                    <option value={i32::from(ability)}, >{ ability.to_str() }</option>
+                let value = i32::from(ability).to_string();
+                if self.ability == ability {
+                    html! {
+                        <option value={value}, selected="selected", >{ ability.to_str() }</option>
+                    }
+                } else {
+                    html! {
+                        <option value={value}, >{ ability.to_str() }</option>
+                    }
                 }
             };
 

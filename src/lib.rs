@@ -5,9 +5,7 @@ extern crate serde_json;
 
 pub mod data;
 
-use std::fmt::{self, Display, Formatter};
 use std::iter::*;
-use std::slice::Iter;
 
 use data::*;
 

@@ -20,11 +20,9 @@ impl Chart {
     fn calculate(context: &mut Context) -> Self {
         context.console.debug("calculating new week");
         let jobs = kp_chart::default_jobs();
-        context.console.debug("====> jobs...");
         let (people_version, people) = PeopleStore::restore(&mut *context)
             .map(|p| (p.inc, p.people))
             .unwrap_or_else(|| (0, kp_chart::default_people()));
-        context.console.debug("====> week...");
         Self {
             people_version: people_version,
             week: kp_chart::calculate(5, jobs, people),
@@ -38,7 +36,6 @@ impl Component<Context> for Chart {
 
     fn create(_props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
         context.console.debug("creating Chart");
-
         Self::calculate(&mut *context)
     }
 

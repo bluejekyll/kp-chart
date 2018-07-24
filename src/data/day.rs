@@ -28,13 +28,24 @@ impl Day {
         for (job, ref mut workers) in day_jobs.iter_mut() {
             for ability in job.people().iter() {
                 match *ability {
-                    Ability::Child => {
-                        workers.push(children.next().expect("ran out of children").clone())
-                    }
-                    Ability::Teen => workers.push(teens.next().expect("ran out of teens").clone()),
-                    Ability::Adult => {
-                        workers.push(adults.next().expect("ran out of adults").clone())
-                    }
+                    Ability::Child => workers.push(
+                        children
+                            .next()
+                            .cloned()
+                            .unwrap_or_else(|| Person::new("No Child Here", Ability::Child)),
+                    ),
+                    Ability::Teen => workers.push(
+                        teens
+                            .next()
+                            .cloned()
+                            .unwrap_or_else(|| Person::new("No Teen Here", Ability::Teen)),
+                    ),
+                    Ability::Adult => workers.push(
+                        adults
+                            .next()
+                            .cloned()
+                            .unwrap_or_else(|| Person::new("No Adult Here", Ability::Adult)),
+                    ),
                 }
             }
         }

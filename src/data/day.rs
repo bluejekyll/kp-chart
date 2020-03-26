@@ -2,7 +2,7 @@ use std::fmt::{self, Display, Formatter};
 use std::iter::Cycle;
 use std::slice::Iter;
 
-use data::{Ability, Job, Person};
+use crate::data::{Ability, Job, Person};
 
 #[derive(Clone, Debug)]
 pub struct Day {

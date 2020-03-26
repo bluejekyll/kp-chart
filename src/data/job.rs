@@ -1,6 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
-use data::Ability;
+use crate::data::Ability;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Job {

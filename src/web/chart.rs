@@ -1,9 +1,9 @@
+use log::debug;
 use yew::prelude::*;
 
-use kp_chart;
-use kp_chart::data::*;
-use web::people::PeopleStore;
-use web::*;
+use crate::data::*;
+use crate::web::people::PeopleStore;
+use yew::services::{storage::Area, StorageService};
 
 #[derive(Clone)]
 pub struct Chart {
@@ -11,57 +11,53 @@ pub struct Chart {
     week: Week,
 }
 
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Default, PartialEq, Properties)]
 pub struct ChartProps {
     pub people_version: usize,
 }
 
 impl Chart {
-    fn calculate(context: &mut Context) -> Self {
-        context.console.debug("calculating new week");
-        let jobs = kp_chart::default_jobs();
-        let (people_version, people) = PeopleStore::restore(&mut *context)
+    fn calculate() -> Self {
+        debug!("calculating new week");
+        let mut local_store = StorageService::new(Area::Local).expect("failed to get storage");
+
+        let jobs = crate::default_jobs();
+        let (people_version, people) = PeopleStore::restore(&mut local_store)
             .map(|p| (p.inc, p.people))
-            .unwrap_or_else(|| (0, kp_chart::default_people()));
+            .unwrap_or_else(|| (0, crate::default_people()));
         Self {
             people_version: people_version,
-            week: kp_chart::calculate(5, jobs, people),
+            week: crate::calculate(5, jobs, people),
         }
     }
 }
 
-impl Component<Context> for Chart {
+impl Component for Chart {
     type Message = ();
     type Properties = ChartProps;
 
-    fn create(_props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
-        context.console.debug("creating Chart");
-        Self::calculate(&mut *context)
+    fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+        debug!("creating Chart");
+        Self::calculate()
     }
 
-    fn update(&mut self, _msg: Self::Message, _context: &mut Env<Context, Self>) -> ShouldRender {
-        true
+    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+        false
     }
 
-    fn change(
-        &mut self,
-        props: Self::Properties,
-        context: &mut Env<Context, Self>,
-    ) -> ShouldRender {
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
         if self.people_version != props.people_version {
-            context.console.debug("updating Chart");
-            *self = Self::calculate(&mut *context);
+            debug!("updating Chart");
+            *self = Self::calculate();
             true
         } else {
             false
         }
     }
-}
 
-impl Renderable<Context, Chart> for Chart {
-    fn view(&self) -> Html<Context, Self> {
+    fn view(&self) -> Html {
         let header = |name: &str| {
-            html!{
+            html! {
                 <th>{ format!("{}", name) }</th>
             }
         };
@@ -72,13 +68,13 @@ impl Renderable<Context, Chart> for Chart {
                 people_str.push_str(", ");
             }
 
-            html!{
+            html! {
                 <td>{ people_str }</td>
             }
         };
         let job_row = |(job_idx, job): (usize, &Job)| {
             let days = self.week.days();
-            html!{
+            html! {
                 <tr>{ header(job.name()) } { for days.iter().map(|d| people_cell(d.get_job_people(job_idx))) }</tr>
             }
         };

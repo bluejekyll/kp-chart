@@ -8,35 +8,26 @@ Browse to [https://bluejekyll.github.io/kp-chart/](https://bluejekyll.github.io/
 
 ## Building
 
-- Install Rust
-
-[https://rustup.rs/](rustup.rs)
-
-- Switch to the nightly compiler
+- Initililize once
 
 ```console
-$> rustup default nightly
-$> rustup target install wasm32-unknown-unknown
+$> make init
 ```
 
-- Install `cargo-web`
+- Build
 
 ```console
-$> cargo install cargo-web
+$> make build
 ```
 
 - Start a local appserver
 
 ```console
-$> cargo web start
+$> make run
 ```
-
-And connect to the local server: [http://[::1]:8000/](http://[::1]:8000/)
 
 ## Deploying
 
 ```console
-$> cargo web deploy --release && rm -r docs/* && cp target/deploy/* docs/
-$> git commit -m $new_release
-$> git push
+$> make deploy
 ```

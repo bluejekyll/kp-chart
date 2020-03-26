@@ -1,11 +1,12 @@
-use stdweb::web::html_element::SelectElement;
+use log::{debug, error};
+use serde::{Deserialize, Serialize};
+use web_sys::HtmlSelectElement;
 use yew::callback::Callback;
 use yew::format::Json;
 use yew::prelude::*;
+use yew::services::{storage::Area, StorageService};
 
-use kp_chart;
-use kp_chart::data::*;
-use web::*;
+use crate::data::*;
 
 const PEOPLE_KEY: &str = "people_v1";
 type IsEditting = bool;
@@ -25,9 +26,10 @@ pub struct PeopleModel {
     inc: usize,
     people: Vec<(Person, IsEditting)>,
     on_save: Option<Callback<usize>>,
+    link: ComponentLink<Self>,
 }
 
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Default, PartialEq, Properties)]
 pub struct PeopleProps {
     pub on_save: Option<Callback<usize>>,
 }
@@ -39,26 +41,22 @@ pub struct PeopleStore {
 }
 
 impl PeopleStore {
-    pub fn restore(context: &mut Context) -> Option<Self> {
-        let from_store = context.local_store.restore(PEOPLE_KEY);
+    pub fn restore(local_store: &mut StorageService) -> Option<Self> {
+        let from_store = local_store.restore(PEOPLE_KEY);
         match from_store {
             Json(Ok(people)) => Some(people),
             // TODO: reset local store...
             Json(Err(err)) => {
-                context
-                    .console
-                    .error(&format!("could not load from local store: {}", err));
+                error!("could not load from local store: {}", err);
                 None
             }
         }
     }
 
-    pub fn store(&mut self, context: &mut Context) {
+    pub fn store(&mut self, local_store: &mut StorageService) {
         self.inc += 1;
-        context
-            .console
-            .debug(&format!("saving people: {}", self.inc));
-        context.local_store.store(PEOPLE_KEY, Json(self as &Self));
+        debug!("saving people: {}", self.inc);
+        local_store.store(PEOPLE_KEY, Json(self as &Self));
     }
 }
 
@@ -72,57 +70,76 @@ impl From<PeopleModel> for PeopleStore {
 }
 
 impl PeopleModel {
-    fn from(model: PeopleStore, on_save: Option<Callback<usize>>) -> Self {
+    fn from(
+        model: PeopleStore,
+        on_save: Option<Callback<usize>>,
+        link: ComponentLink<Self>,
+    ) -> Self {
         Self {
             inc: model.inc,
             people: model.people.into_iter().map(|p| (p, false)).collect(),
             on_save,
+            link,
         }
     }
 }
 
-impl Component<Context> for PeopleModel {
+impl Component for PeopleModel {
     type Message = PeopleMsg;
     type Properties = PeopleProps;
 
-    fn create(props: Self::Properties, context: &mut Env<Context, Self>) -> Self {
-        context.console.debug("creating PeopleModel");
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        debug!("creating PeopleModel");
 
-        match PeopleStore::restore(&mut *context) {
-            Some(this) => PeopleModel::from(this, props.on_save),
+        let mut local_store = StorageService::new(Area::Local).expect("failed to get storage");
+
+        match PeopleStore::restore(&mut local_store) {
+            Some(this) => Self {
+                inc: this.inc,
+                people: this.people.into_iter().map(|p| (p, false)).collect(),
+                on_save: props.on_save,
+                link,
+            },
             None => {
-                let people = kp_chart::default_people();
+                let people = crate::default_people();
                 // TODO: make a borrowed type
                 let mut people = PeopleStore {
                     inc: 0,
                     people: people,
                 };
 
-                people.store(&mut *context);
-                PeopleModel::from(people, props.on_save)
+                people.store(&mut local_store);
+                Self {
+                    inc: people.inc,
+                    people: people.people.into_iter().map(|p| (p, false)).collect(),
+                    on_save: props.on_save,
+                    link,
+                }
             }
         }
     }
 
-    fn update(&mut self, msg: Self::Message, context: &mut Env<Context, Self>) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             PeopleMsg::SavePeople => {
-                context.console.debug("saving PeopleModel");
+                debug!("saving PeopleModel");
+                let mut local_store =
+                    StorageService::new(Area::Local).expect("failed to get storage");
                 let mut people: PeopleStore = self.clone().into();
-                people.store(&mut *context);
-                *self = PeopleModel::from(people, self.on_save.take());
+                people.store(&mut local_store);
+                *self = PeopleModel::from(people, self.on_save.take(), self.link.clone());
 
                 self.on_save.as_ref().map(|e| e.emit(self.inc));
                 true
             }
             PeopleMsg::AddPerson => {
-                context.console.debug("adding a Person");
+                debug!("adding a Person");
                 let person = Person::new("Jane Doe", Ability::Adult);
                 self.people.push((person, true));
                 true
             }
             PeopleMsg::EditPerson(id) => {
-                context.console.debug(&format!("edit person: {}", id));
+                debug!("edit person: {}", id);
                 self.people
                     .get_mut(id)
                     .map(|p| {
@@ -137,14 +154,14 @@ impl Component<Context> for PeopleModel {
             }
             PeopleMsg::DeletePerson(idx) => {
                 let person = self.people.remove(idx);
-                context.console.debug(&format!("deleted {:?}", person));
+                debug!("deleted {:?}", person);
                 true
             }
             PeopleMsg::PersonNameInput(id, name) => self
                 .people
                 .get_mut(id)
                 .map(|p| {
-                    context.console.debug(&format!("saving name: {}", name));
+                    debug!("saving name: {}", name);
                     if p.0.name() != name {
                         p.0.set_name(name);
                         true
@@ -157,7 +174,7 @@ impl Component<Context> for PeopleModel {
                 .people
                 .get_mut(id)
                 .map(|p| {
-                    context.console.debug(&format!("saving name: {}", ability));
+                    debug!("saving name: {}", ability);
                     if p.0.ability() != ability {
                         p.0.set_ability(ability);
                         true
@@ -169,34 +186,30 @@ impl Component<Context> for PeopleModel {
         }
     }
 
-    fn change(
-        &mut self,
-        _props: Self::Properties,
-        _context: &mut Env<Context, Self>,
-    ) -> ShouldRender {
-        false
-    }
-}
-
-impl Renderable<Context, PeopleModel> for PeopleModel {
-    fn view(&self) -> Html<Context, Self> {
+    fn view(&self) -> Html {
         // let select = |is_selected: bool| {
         //     html!{
         //         <Select: is_selected={is_selected}, />
         //     }
         // };
 
-        let edit_delete = |id: Id, is_editting: IsEditting| {
-            html!{
-                <EditDelete: id={id}, is_editting={is_editting}, on_edit=|id: Id| PeopleMsg::EditPerson(id), on_delete=|id: Id| PeopleMsg::DeletePerson(id), />
+        let edit_delete = |id: Id, is_editting: IsEditting, link: &ComponentLink<Self>| {
+            let on_edit = link.callback(PeopleMsg::EditPerson);
+            let on_delete = link.callback(PeopleMsg::DeletePerson);
+
+            html! {
+                <EditDelete: id={id}, is_editting={is_editting}, on_edit=on_edit, on_delete=on_delete, />
             }
         };
-        let person_row = |id: Id, person: &(Person, IsEditting)| {
-            html!{
+        let person_row = |id: Id, person: &(Person, IsEditting), link: &ComponentLink<Self>| {
+            let name_on_input = link.callback(|(i, n)| PeopleMsg::PersonNameInput(i, n));
+            let ability_on_input = link.callback(|(i, a)| PeopleMsg::PersonAbilityInput(i, a));
+
+            html! {
                 <tr>
-                    <td><PersonName: id={id}, name={person.0.name().clone()}, is_editting={person.1}, on_input=|(i,n)| PeopleMsg::PersonNameInput(i, n),/></td>
-                    <td><PersonAbility: id={id}, ability={person.0.ability()}, is_editting={person.1}, on_input=|(i,a)| PeopleMsg::PersonAbilityInput(i, a),/></td>
-                    <td class="edit_delete",>{ edit_delete(id, person.1) }</td>
+                    <td><PersonName: id={id}, name={person.0.name().clone()}, is_editting={person.1}, on_input=name_on_input,/></td>
+                    <td><PersonAbility: id={id}, ability={person.0.ability()}, is_editting={person.1}, on_input=ability_on_input,/></td>
+                    <td class="edit_delete",>{ edit_delete(id, person.1, &self.link) }</td>
                 </tr>
             }
         };
@@ -209,14 +222,14 @@ impl Renderable<Context, PeopleModel> for PeopleModel {
                         <tr><th>{"Person"}</th><th>{"Ability"}</th><th>{" "}</th></tr>
                     </thead>
                     <tbody>
-                        { for self.people.iter().enumerate().map(|(i, p)| person_row(i, p)) }
+                        { for self.people.iter().enumerate().map(|(i, p)| person_row(i, p, &self.link)) }
                     </tbody>
                     <tfoot>
                         <tr><td>
-                            <button onclick=|_| PeopleMsg::AddPerson, >
+                            <button onclick=self.link.callback(|_| PeopleMsg::AddPerson), >
                                 <i class=("fa", "fa-plus-square"), aria-hidden="true",></i>
                             </button>
-                            <button onclick=|_| PeopleMsg::SavePeople, >
+                            <button onclick=self.link.callback(|_| PeopleMsg::SavePeople), >
                                 <i class=("fa", "fa-floppy-o"), aria-hidden="true",></i>
                             </button>
                             //button onclick=|_| PeopleMsg::SavePeople, >{"Save all the People"}</button>
@@ -265,8 +278,17 @@ impl Renderable<Context, PeopleModel> for PeopleModel {
 // }
 
 /// EditDelete Component for a person row
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone)]
 struct EditDelete {
+    id: Id,
+    is_editting: IsEditting,
+    on_edit: Option<Callback<Id>>,
+    on_delete: Option<Callback<Id>>,
+    link: ComponentLink<Self>,
+}
+
+#[derive(Clone, PartialEq, Default, Properties)]
+struct EditDeleteProps {
     pub id: Id,
     pub is_editting: IsEditting,
     pub on_edit: Option<Callback<Id>>,
@@ -278,29 +300,30 @@ enum EditDeleteMsg {
     Delete,
 }
 
-impl Component<Context> for EditDelete {
+impl Component for EditDelete {
     type Message = EditDeleteMsg;
-    type Properties = Self;
+    type Properties = EditDeleteProps;
 
-    fn create(props: Self::Properties, _context: &mut Env<Context, Self>) -> Self {
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             id: props.id,
             is_editting: props.is_editting,
             on_edit: props.on_edit,
             on_delete: props.on_delete,
+            link,
         }
     }
 
-    fn update(&mut self, msg: Self::Message, context: &mut Env<Context, Self>) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             EditDeleteMsg::Edit => {
-                context.console.debug(&format!("editting: {}", self.id));
+                debug!("editting: {}", self.id);
                 if !self.is_editting {
                     self.on_edit.as_ref().map(|c| c.emit(self.id));
                 }
             }
             EditDeleteMsg::Delete => {
-                context.console.debug(&format!("deleting: {}", self.id));
+                debug!("deleting: {}", self.id);
                 self.on_delete.as_ref().map(|c| c.emit(self.id));
             }
         }
@@ -308,34 +331,37 @@ impl Component<Context> for EditDelete {
         false
     }
 
-    fn change(
-        &mut self,
-        props: Self::Properties,
-        _context: &mut Env<Context, Self>,
-    ) -> ShouldRender {
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
         if self.is_editting != props.is_editting {
             self.is_editting = props.is_editting;
             return true;
         }
         false
     }
-}
 
-impl Renderable<Context, EditDelete> for EditDelete {
-    fn view(&self) -> Html<Context, Self> {
+    fn view(&self) -> Html {
         let disabled = if self.is_editting { "disabled" } else { "" };
 
         html! {
             <div class="edit_delete", >
-                <i class=("fa", "fa-pencil-square-o", "fa-fw", disabled), aria-hidden="true", onclick=|_| EditDeleteMsg::Edit, />
-                <i class=("fa", "fa-trash", "fa-fw"), aria-hidden="true", onclick=|_| EditDeleteMsg::Delete, />
+                <i class=("fa", "fa-pencil-square-o", "fa-fw", disabled), aria-hidden="true", onclick=self.link.callback(|_| EditDeleteMsg::Edit), />
+                <i class=("fa", "fa-trash", "fa-fw"), aria-hidden="true", onclick=self.link.callback(|_| EditDeleteMsg::Delete), />
             </div>
         }
     }
 }
 
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone)]
 struct PersonName {
+    id: Id,
+    name: String,
+    is_editting: IsEditting,
+    on_input: Option<Callback<(Id, String)>>,
+    link: ComponentLink<Self>,
+}
+
+#[derive(Clone, PartialEq, Default, Properties)]
+struct PersonNameProps {
     pub id: Id,
     pub name: String,
     pub is_editting: IsEditting,
@@ -346,25 +372,24 @@ enum PersonNameMsg {
     Input(String),
 }
 
-impl Component<Context> for PersonName {
+impl Component for PersonName {
     type Message = PersonNameMsg;
-    type Properties = Self;
+    type Properties = PersonNameProps;
 
-    fn create(props: Self::Properties, _context: &mut Env<Context, Self>) -> Self {
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             id: props.id,
             name: props.name.clone(),
             is_editting: props.is_editting,
             on_input: props.on_input,
+            link,
         }
     }
 
-    fn update(&mut self, msg: Self::Message, context: &mut Env<Context, Self>) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             PersonNameMsg::Input(n) => {
-                context
-                    .console
-                    .debug(&format!("input: {}, {}", self.id, self.name));
+                debug!("input: {}, {}", self.id, self.name);
                 if self.is_editting {
                     self.on_input.as_ref().map(|c| c.emit((self.id, n)));
                 }
@@ -374,11 +399,7 @@ impl Component<Context> for PersonName {
         false
     }
 
-    fn change(
-        &mut self,
-        props: Self::Properties,
-        _context: &mut Env<Context, Self>,
-    ) -> ShouldRender {
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
         let mut render = false;
         if self.is_editting != props.is_editting {
             self.is_editting = props.is_editting;
@@ -391,13 +412,11 @@ impl Component<Context> for PersonName {
         }
         render
     }
-}
 
-impl Renderable<Context, PersonName> for PersonName {
-    fn view(&self) -> Html<Context, Self> {
+    fn view(&self) -> Html {
         if self.is_editting {
             html! {
-                <input type="text", value={&self.name}, oninput=|e| PersonNameMsg::Input(e.value), />
+                <input type="text", value={&self.name}, oninput=self.link.callback(|e: InputData| PersonNameMsg::Input(e.value)), />
             }
         } else {
             html! {
@@ -407,8 +426,16 @@ impl Renderable<Context, PersonName> for PersonName {
     }
 }
 
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone)]
 struct PersonAbility {
+    id: Id,
+    ability: Ability,
+    is_editting: IsEditting,
+    on_input: Option<Callback<(Id, Ability)>>,
+    link: ComponentLink<Self>,
+}
+#[derive(Clone, PartialEq, Default, Properties)]
+struct PersonAbilityProps {
     pub id: Id,
     pub ability: Ability,
     pub is_editting: IsEditting,
@@ -416,35 +443,32 @@ struct PersonAbility {
 }
 
 enum PersonAbilityMsg {
-    Input(SelectElement),
+    Input(HtmlSelectElement),
 }
 
-impl Component<Context> for PersonAbility {
+impl Component for PersonAbility {
     type Message = PersonAbilityMsg;
-    type Properties = Self;
+    type Properties = PersonAbilityProps;
 
-    fn create(props: Self::Properties, _context: &mut Env<Context, Self>) -> Self {
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             id: props.id,
             ability: props.ability.clone(),
             is_editting: props.is_editting,
             on_input: props.on_input,
+            link,
         }
     }
 
-    fn update(&mut self, msg: Self::Message, context: &mut Env<Context, Self>) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             PersonAbilityMsg::Input(se) => {
-                context
-                    .console
-                    .debug(&format!("input: {}, {:?}", self.id, se.selected_index()));
+                debug!("input: {}, {:?}", self.id, se.selected_index());
 
-                let enum_i32: i32 = se.selected_index().expect("ability needs to be set") as i32;
+                let enum_i32: i32 = se.selected_index();
                 let ability = Ability::from_i32(enum_i32);
 
-                context
-                    .console
-                    .debug(&format!("input: {}, {}", self.id, ability));
+                debug!("input: {}, {}", self.id, ability);
                 if self.is_editting {
                     self.on_input.as_ref().map(|c| c.emit((self.id, ability)));
                 }
@@ -454,11 +478,7 @@ impl Component<Context> for PersonAbility {
         false
     }
 
-    fn change(
-        &mut self,
-        props: Self::Properties,
-        _context: &mut Env<Context, Self>,
-    ) -> ShouldRender {
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
         let mut render = false;
         if self.is_editting != props.is_editting {
             self.is_editting = props.is_editting;
@@ -471,16 +491,14 @@ impl Component<Context> for PersonAbility {
         }
         render
     }
-}
 
-impl Renderable<Context, PersonAbility> for PersonAbility {
-    fn view(&self) -> Html<Context, Self> {
+    fn view(&self) -> Html {
         if self.is_editting {
             let select_ability = |ability: Ability| {
                 let value = i32::from(ability).to_string();
                 if self.ability == ability {
                     html! {
-                        <option value={value}, selected="selected", >{ ability.to_str() }</option>
+                        <option value={value}, selected=true, >{ ability.to_str() }</option>
                     }
                 } else {
                     html! {
@@ -490,10 +508,10 @@ impl Renderable<Context, PersonAbility> for PersonAbility {
             };
 
             html! {
-                <select onchange=|e| match e {
+                <select onchange=self.link.callback(|e| match e {
                     ChangeData::Select(se) => PersonAbilityMsg::Input(se),
                     _ => unreachable!(),
-                },>
+                }),>
                    { for Ability::enumerate().iter().map(|a| select_ability(*a)) }
                 </select>
             }

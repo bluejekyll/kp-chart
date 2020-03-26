@@ -1,13 +1,14 @@
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+#![recursion_limit = "2048"]
 
 pub mod data;
+pub mod web;
 
+use log::Level;
 use std::iter::*;
+use wasm_bindgen::prelude::*;
+use yew::prelude::*;
 
-use data::*;
+use self::data::*;
 
 pub fn default_jobs() -> Vec<Job> {
     let mut jobs = Vec::<Job>::new();
@@ -114,4 +115,15 @@ pub fn calculate(num_days: usize, jobs: Vec<Job>, people: Vec<Person>) -> Week {
     }
 
     Week::new(days)
+}
+
+#[wasm_bindgen(start)]
+pub fn start() -> Result<(), JsValue> {
+    console_log::init_with_level(Level::Debug).expect("failed to initialize logger");
+    yew::initialize();
+
+    App::<crate::web::RootModel>::new().mount_to_body_with_props(());
+    yew::run_loop();
+
+    Ok(())
 }

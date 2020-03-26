@@ -1,4 +1,4 @@
-use data::{Day, Job};
+use crate::data::{Day, Job};
 
 #[derive(Clone, Debug)]
 pub struct Week {

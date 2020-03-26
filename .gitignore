@@ -1,2 +1,6 @@
 /target
+/pkg
+/node_modules
+.cache/
+dist/
 **/*.rs.bk

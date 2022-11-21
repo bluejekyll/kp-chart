@@ -10,7 +10,7 @@
     "copy-webpack-plugin": "^5.1.1",
     "@wasm-tool/wasm-pack-plugin": "^1.2.0",
     "webpack": "^4.42.0",
-    "webpack-cli": "^3.3.11",
+    "webpack-cli": "^3.3.12",
     "base64-loader": "^1.0.0"
   },
   "scripts": {
